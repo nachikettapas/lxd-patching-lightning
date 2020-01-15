@@ -35,9 +35,12 @@ make check && \
 sudo make install
 
 # Lightning repo setup
-cd /tmt && \
+cd /tmp && \
 git clone https://github.com/ElementsProject/lightning.git && \
 cd lightning && \
 ./configure && \
 make
 
+# Clone main repository
+cd /tmp && \
+git clone https://github.com/nachikettapas/patching-lightning.git 

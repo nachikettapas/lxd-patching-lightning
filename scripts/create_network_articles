@@ -1,0 +1,78 @@
+#!/bin/sh
+
+package="create network artifacts"
+TYPE=node
+NETWORK=regtest
+
+while test $# -gt 0; do
+  case "$1" in
+    -h|--help)
+      echo "$package - To create network artifacts like bitcoin.conf"
+      echo " file, config file and Deployment_config.json file."
+      echo " "
+      echo "$package [options]"
+      echo " "
+      echo "options:"
+      echo "-h, --help            show brief help"
+      echo "--type=TYPE           specify type of node (node/other)"
+      echo "--network=NETWORK     specify network (regtest/testnet)"
+      exit 0
+      ;;
+    --type*)
+      export TYPE=`echo $1 | sed -e 's/^[^=]*=//g'`
+      shift
+      ;;
+    --network*)
+      export NETWORK=`echo $1 | sed -e 's/^[^=]*=//g'`
+      shift
+      ;;
+    *)
+      break
+      ;;
+  esac
+done
+
+echo "TYPE=$TYPE"
+echo "NETWORK=$NETWORK"
+
+# Following code will create a new file
+if test "$TYPE" = "node" 
+then
+	sed '8d' ../configurations/bitcoin_blueprint.conf > ../workdir/node/bitcoin.conf
+else
+	cp ../configurations/bitcoin_blueprint.conf ../workdir/other
+	mv ../workdir/other/bitcoin_blueprint.conf ../workdir/other/bitcoin.conf
+fi
+
+# Following code will work on the file created above
+if test "$NETWORK" = "regtest" 
+then
+	sed -i '1d' ../workdir/$TYPE/bitcoin.conf
+else
+	sed -i '7d' ../workdir/$TYPE/bitcoin.conf
+	sed -i '2d' ../workdir/$TYPE/bitcoin.conf
+fi
+
+# Copying other files in the workdir
+cp ../configurations/config ../workdir/$TYPE/config
+
+if test "$TYPE" = "other"
+then
+	cp ../configurations/Deployment_config.json ../workdir/$TYPE/Deployment_config.json
+fi
+
+# This section gathers the ip's and other details for the 
+# configuration files
+if test "$TYPE" = "other"
+then
+	node_ip=$(lxc list "bitcoin-node" -c 4 | awk '!/IPV4/{ if ( $2 != "" ) print $2}')
+	hub_id=$(lxc exec "bitcoin-node" -- /home/ubuntu/lightning/cli/lightning-cli getinfo | jq .id)
+	vendor_ip=$(lxc list "vendor" -c 4 | awk '!/IPV4/{ if ( $2 != "" ) print $2}')
+
+	# Replacing the values
+	sed -i 's/replace_with_ip/$node_ip/g' ../workdir/$TYPE/bitcoin.conf
+	sed -i 's/replace_with_network/$NETWORK/g' ../workdir/$TYPE/Deployment_config.json
+	sed -i 's/replace_with_ip/$node_ip/g' ../workdir/$TYPE/Deployment_config.json
+	sed -i 's/replace_with_id/$hub_id/g' ../workdir/$TYPE/Deployment_config.json
+	sed -i 's/replace_with_vendor_ip/$vendor_ip/g' ../workdir/$TYPE/Deployment_config.json
+fi

@@ -3,13 +3,24 @@
 NETWORK=$1
 
 # Run the bitcoind process
-bitcoind --datadir=/home/ubuntu/.bitcoin >> runLogBitcoin.log 2>&1 &
+echo "Running the bitcoin daemon..."
+nohup bitcoind --datadir=/home/ubuntu/.bitcoin > runLogBitcoin.log 2>&1 &
+
+# Letting the bitcoin process to start
+sleep 60
 
 # Run lightning process
-/home/ubuntu/lightning/lightningd/lightningdi --log-level=debug --daemon >> runLogLightning.log 2>&1 &
+echo "Running the lightning daemon..."
+nohup /home/ubuntu/lightning/lightningd/lightningd --log-level=debug --daemon > runLogLightning.log 2>&1 &
+
+# Letting the lightning process to start
+sleep 60
 
 # Run the mining process if regtest network
+echo "Running the mining process..."
 if test "$NETWORK" = "regtest"
 then
-	while true; do bitcoin-cli generate 1; sleep 300; done
+        echo "while true; do bitcoin-cli generate 1; sleep 300; done" > /home/ubuntu/mining
+	nohup sh mining &
 fi
+

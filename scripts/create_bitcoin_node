@@ -23,9 +23,11 @@ sudo apt-get install -y \
  net-tools \
  zlib1g-dev \
  libbase58-dev \
- jq
+ jq \
+ python3-mako \
+ gettext
 
-cd /tmp && /
+cd /home/ubuntu && /
 wget "https://download.libsodium.org/libsodium/releases/LATEST.tar.gz" && \
 tar -xvf ./LATEST.tar.gz && \
 cd libsodium-stable && \
@@ -35,12 +37,12 @@ make check && \
 sudo make install
 
 # Lightning repo setup
-cd /tmp && \
+cd /home/ubuntu && \
 git clone https://github.com/ElementsProject/lightning.git && \
 cd lightning && \
 ./configure && \
 make
 
 # Clone main repository
-cd /tmp && \
+cd /home/ubuntu && \
 git clone https://github.com/nachikettapas/patching-lightning.git 

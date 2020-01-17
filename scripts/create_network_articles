@@ -60,19 +60,3 @@ if test "$TYPE" = "other"
 then
 	cp ../configurations/Deployment_config.json ../workdir/$TYPE/Deployment_config.json
 fi
-
-# This section gathers the ip's and other details for the 
-# configuration files
-if test "$TYPE" = "other"
-then
-	node_ip=$(lxc list "bitcoin-node" -c 4 | awk '!/IPV4/{ if ( $2 != "" ) print $2}')
-	hub_id=$(lxc exec "bitcoin-node" -- /home/ubuntu/lightning/cli/lightning-cli getinfo | jq .id)
-	vendor_ip=$(lxc list "vendor" -c 4 | awk '!/IPV4/{ if ( $2 != "" ) print $2}')
-
-	# Replacing the values
-	sed -i 's/replace_with_ip/$node_ip/g' ../workdir/$TYPE/bitcoin.conf
-	sed -i 's/replace_with_network/$NETWORK/g' ../workdir/$TYPE/Deployment_config.json
-	sed -i 's/replace_with_ip/$node_ip/g' ../workdir/$TYPE/Deployment_config.json
-	sed -i 's/replace_with_id/$hub_id/g' ../workdir/$TYPE/Deployment_config.json
-	sed -i 's/replace_with_vendor_ip/$vendor_ip/g' ../workdir/$TYPE/Deployment_config.json
-fi

@@ -1,0 +1,77 @@
+#!/bin/bash
+
+# Number of instances
+NODES=$1
+VENDORS=$2
+DISTRIBUTORS=$3
+IOTS=$4
+NETWORK=$5
+
+# Instantiate the machines
+# Bitcoin Nodes
+for i in $( seq 1 $NODES )
+do
+	lxc launch ubuntu:16.04 "bitcoin-node-$i"
+	sleep 10
+	echo "Setting up hostname..."
+	lxc exec bitcoin-node-$i -- sudo --login --user ubuntu bash -ilc "echo $(hostname -I | cut -d\  -f1) bitcoin-node-$i | sudo tee -a /etc/hosts"
+	echo "SSH key generation..."
+	lxc exec bitcoin-node-$i -- sudo --login --user ubuntu bash -ilc "ssh-keygen -b 2048 -t rsa -f /home/ubuntu/.ssh/id_rsa -q -N \"\""
+	echo "Restarting SSH service..."
+	lxc exec bitcoin-node-$i -- sudo --login --user ubuntu bash -ilc "systemctl restart ssh"
+	echo "Pulling SSH public key..."
+	lxc file pull bitcoin-node-$i/home/ubuntu/.ssh/id_rsa.pub ../workdir/ssh_files/id_rsa_bitcoin_node_$i.pub
+	echo "Copying setup file to machine $i..."
+	#lxc file push ./create_bitcoin_node bitcoin-node-$i/home/ubuntu/create_bitcoin_node
+	echo "Executing setup file to machine $i..."
+	#lxc exec bitcoin-node-$i -- sudo --login --user ubuntu bash -ilc "sh create_bitcoin_node &"
+	echo "Copying execution file to machine $i..."
+	#lxc file push ./run_bitcoin_node bitcoin-node-$i/home/ubuntu/run_bitcoin_node
+	echo "Executing execution file to machine $i..."
+	#lxc exec bitcoin-node-$i -- sudo --login --user ubuntu bash -ilc "sh run_bitcoin_node $NETWORK &"
+done
+
+# Vendors
+for i in $( seq 1 $VENDORS )
+do
+	lxc launch ubuntu:16.04 "vendor-$i"
+	sleep 10
+	lxc exec vendor-$i -- sudo --login --user ubuntu bash -ilc "echo $(hostname -I | cut -d\  -f1) vendor-$i | sudo tee -a /etc/hosts"
+	echo "SSH key generation..."
+	lxc exec vendor-$i -- sudo --login --user ubuntu bash -ilc "ssh-keygen -b 2048 -t rsa -f /home/ubuntu/.ssh/id_rsa -q -N \"\""
+	echo "Pulling SSH public key..."
+	lxc file pull vendor-$i/home/ubuntu/.ssh/id_rsa.pub ../workdir/ssh_files/id_rsa_vendor_$i.pub
+	echo "Restarting SSH service..."
+	lxc exec vendor-$i -- sudo --login --user ubuntu bash -ilc "systemctl restart ssh"
+done
+
+# Distributors
+for i in $( seq 1 $DISTRIBUTORS )
+do
+	lxc launch ubuntu:16.04 "distributor-$i"
+	sleep 10
+	lxc exec distributor-$i -- sudo --login --user ubuntu bash -ilc "echo $(hostname -I | cut -d\  -f1) distributor-$i | sudo tee -a /etc/hosts"
+	echo "SSH key generation..."
+	lxc exec distributor-$i -- sudo --login --user ubuntu bash -ilc "ssh-keygen -b 2048 -t rsa -f /home/ubuntu/.ssh/id_rsa -q -N \"\""
+	echo "Pulling SSH public key..."
+	lxc file pull distributor-$i/home/ubuntu/.ssh/id_rsa.pub ../workdir/ssh_files/id_rsa_distributor_$i.pub
+	echo "Restarting SSH service..."
+	lxc exec distributor-$i -- sudo --login --user ubuntu bash -ilc "systemctl restart ssh"
+done
+
+# IoT nodes
+for i in $( seq 1 $IOTS )
+do
+	lxc launch ubuntu:16.04 "iot-$i"
+	sleep 10
+	lxc exec iot-$i -- sudo --login --user ubuntu bash -ilc "echo $(hostname -I | cut -d\  -f1) iot-$i | sudo tee -a /etc/hosts"
+	echo "SSH key generation..."
+	lxc exec iot-$i -- sudo --login --user ubuntu bash -ilc "ssh-keygen -b 2048 -t rsa -f /home/ubuntu/.ssh/id_rsa -q -N \"\""
+	echo "Pulling SSH public key..."
+	lxc file pull iot-$i/home/ubuntu/.ssh/id_rsa.pub ../workdir/ssh_files/id_rsa_iot_$i.pub
+	echo "Restarting SSH service..."
+	lxc exec iot-$i -- sudo --login --user ubuntu bash -ilc "systemctl restart ssh"
+done
+
+# Copying public keys for communication
+

@@ -21,6 +21,6 @@ echo "Running the mining process..."
 if test "$NETWORK" = "regtest"
 then
         echo "while true; do bitcoin-cli generate 1; sleep 300; done" > /home/ubuntu/mining
-	nohup sh mining &
+	nohup sh /home/ubuntu/mining &
 fi
 

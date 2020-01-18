@@ -7,6 +7,12 @@ DISTRIBUTORS=$3
 IOTS=$4
 NETWORK=$5
 
+# Start time of the script
+start_script=`date +%s`
+
+# Remove ip details
+rm -rf ../workdir/devices/*
+
 # Create network artifacts
 sh create_network_articles --type=node --network=$NETWORK
 sh create_network_articles --type=other --network=$NETWORK
@@ -153,3 +159,48 @@ lxc file push ../workdir/other/Deployment_config.json bitcoin-node-1/home/ubuntu
 lxc file push ../workdir/devices/vendor bitcoin-node-1/home/ubuntu/patching-lightning/Deployment/vendor
 lxc file push ../workdir/devices/distributor bitcoin-node-1/home/ubuntu/patching-lightning/Deployment/distributor
 lxc file push ../workdir/devices/iot bitcoin-node-1/home/ubuntu/patching-lightning/Deployment/iot
+
+# End of machine setup
+end_machine=`date +%s`
+echo "Machine setup: $((end_machine-start_script))"
+
+# Setup vendor machine
+lxc exec bitcoin-node-1 -- sudo --login --user ubuntu bash -ilc "cd /home/ubuntu/patching-lightning/Deployment && chmod +x deploy.sh && ./deploy.sh --new --vendor"
+lxc exec bitcoin-node-1 -- sudo --login --user ubuntu bash -ilc "cd /home/ubuntu/patching-lightning/Deployment && ./deploy.sh --run --vendor"
+
+# End of vendor setup
+end_vendor=`date +%s`
+echo "Vendor Machine deployment: $((end_vendor-end_machine))"
+
+# Setup distributor machine
+lxc exec bitcoin-node-1 -- sudo --login --user ubuntu bash -ilc "cd /home/ubuntu/patching-lightning/Deployment && ./deploy.sh --new --distributor"
+lxc exec bitcoin-node-1 -- sudo --login --user ubuntu bash -ilc "cd /home/ubuntu/patching-lightning/Deployment && ./deploy.sh --run --distributor"
+
+# This is the wait for mining 6 transactions
+sleep 1800;
+
+# End of distributor setup
+end_distributor=`date +%s`
+echo "Distributor Machine deployment: $((end_distributor-end_vendor))"
+
+# Setup iot machine
+lxc exec bitcoin-node-1 -- sudo --login --user ubuntu bash -ilc "cd /home/ubuntu/patching-lightning/Deployment && ./deploy.sh --new --iot"
+lxc exec bitcoin-node-1 -- sudo --login --user ubuntu bash -ilc "cd /home/ubuntu/patching-lightning/Deployment && ./deploy.sh --run --iot"
+
+# This is the wait for mining 6 transactions
+sleep 1800;
+
+# End of iot setup
+end_iot=`date +%s`
+echo "IoT Machine deployment: $((end_iot-end_distributor))"
+
+echo "Run Time Statistics"
+echo "-------------------"
+echo "Machine setup: $((end_machine-start_script))"
+echo "Vendor Machine deployment: $((end_vendor-end_machine))"
+echo "Distributor Machine deployment: $((end_distributor-end_vendor))"
+echo "IoT Machine deployment: $((end_iot-end_distributor))"
+echo "Total Execution Time: $((end_iot-start_script))"
+
+echo "Test configuration files in vendor"
+lxc exec vendor-1 -- sudo --login --user ubuntu bash -ilc "mkdir -p /home/ubuntu/testfiles && cd /home/ubuntu/testfiles && dd if=/dev/urandom of=file-10kb bs=10 count=1000 && dd if=/dev/urandom of=file-100kb bs=100 count=1000 && dd if=/dev/urandom of=file-1mb bs=1000 count=1000 && dd if=/dev/urandom of=file-10mb bs=10000 count=1000 && dd if=/dev/urandom of=file-100mb bs=10000 count=10000 && dd if=/dev/urandom of=file-1gb bs=100000 count=10000"

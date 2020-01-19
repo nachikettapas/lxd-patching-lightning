@@ -174,10 +174,11 @@ echo "Vendor Machine deployment: $((end_vendor-end_machine))"
 
 # Setup distributor machine
 lxc exec bitcoin-node-1 -- sudo --login --user ubuntu bash -ilc "cd /home/ubuntu/patching-lightning/Deployment && ./deploy.sh --new --distributor"
-lxc exec bitcoin-node-1 -- sudo --login --user ubuntu bash -ilc "cd /home/ubuntu/patching-lightning/Deployment && ./deploy.sh --run --distributor"
 
 # This is the wait for mining 6 transactions
-sleep 1800;
+sleep 3000;
+
+lxc exec bitcoin-node-1 -- sudo --login --user ubuntu bash -ilc "cd /home/ubuntu/patching-lightning/Deployment && ./deploy.sh --run --distributor"
 
 # End of distributor setup
 end_distributor=`date +%s`
@@ -185,10 +186,11 @@ echo "Distributor Machine deployment: $((end_distributor-end_vendor))"
 
 # Setup iot machine
 lxc exec bitcoin-node-1 -- sudo --login --user ubuntu bash -ilc "cd /home/ubuntu/patching-lightning/Deployment && ./deploy.sh --new --iot"
-lxc exec bitcoin-node-1 -- sudo --login --user ubuntu bash -ilc "cd /home/ubuntu/patching-lightning/Deployment && ./deploy.sh --run --iot"
 
 # This is the wait for mining 6 transactions
-sleep 1800;
+sleep 3000;
+
+lxc exec bitcoin-node-1 -- sudo --login --user ubuntu bash -ilc "cd /home/ubuntu/patching-lightning/Deployment && ./deploy.sh --run --iot"
 
 # End of iot setup
 end_iot=`date +%s`

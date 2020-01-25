@@ -44,6 +44,8 @@ do
 	lxc file push ../workdir/node/config bitcoin-node-$i/home/ubuntu/.lightning/config
 	echo "Executing execution file to machine $i..."
 	lxc exec bitcoin-node-$i -- sudo --login --user ubuntu bash -ilc "sh run_bitcoin_node $NETWORK"
+	echo "Running the mining process..."
+	lxc exec bitcoin-node-$i -- sudo --login --user ubuntu bash -ilc "nohup ./mining &"
 done
 
 # Vendors

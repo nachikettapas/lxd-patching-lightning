@@ -6,6 +6,11 @@ VENDORS=$2
 DISTRIBUTORS=$3
 IOTS=$4
 NETWORK=$5
+UDPPORT=$6
+
+# Setup upnpc on host machine
+sudo apt-get install -y linux-igd
+echo "EXTIFACE=ens4 \nINTIFACE=lxdbr0" | sudo tee -a /etc/default/linux-igd
 
 # Start time of the script
 start_script=`date +%s`
@@ -74,6 +79,8 @@ do
 	do
 		lxc exec bitcoin-node-$j -- sudo --login --user ubuntu bash -ilc "echo exit | ssh -o \"StrictHostKeyChecking no\" ubuntu@$vendor_ip | echo connected"
 	done
+	echo "Install and configure upnp..."
+	lxc exec vendor-$i -- sudo --login --user ubuntu bash -ilc "sudo apt-get install -y miniupnpc && upnpc -a $vendor_ip $UDPPORT $UDPPORT UDP"
 done
 
 # Distributors
@@ -98,6 +105,8 @@ do
 	do
 		lxc exec bitcoin-node-$j -- sudo --login --user ubuntu bash -ilc "echo exit | ssh -o \"StrictHostKeyChecking no\" ubuntu@$distributor_ip | echo connected"
 	done
+	echo "Install and configure upnp..."
+	lxc exec distributor-$i -- sudo --login --user ubuntu bash -ilc "sudo apt-get install -y miniupnpc && upnpc -a $vendor_ip $UDPPORT $UDPPORT UDP"
 done
 
 # IoT nodes
@@ -133,6 +142,8 @@ do
 	do
 		lxc exec vendor-$j -- sudo --login --user ubuntu bash -ilc "echo exit | ssh -o \"StrictHostKeyChecking no\" ubuntu@$iot_ip | echo \"vendor node $j connected\""
 	done
+	echo "Install and configure upnp..."
+	lxc exec iot-$i -- sudo --login --user ubuntu bash -ilc "sudo apt-get install -y miniupnpc && upnpc -a $vendor_ip $UDPPORT $UDPPORT UDP"
 done
 
 # Prepare installation files

@@ -20,6 +20,7 @@ sleep 60
 echo "Running the mining process..."
 if test "$NETWORK" = "regtest"
 then
+	bitcoin-cli generate 202
         cd /home/ubuntu
         lightningAddr=$(lightning/cli/lightning-cli newaddr p2sh-segwit | jq -r .address)
         bitcoin-cli sendtoaddress $lightningAddr 1000

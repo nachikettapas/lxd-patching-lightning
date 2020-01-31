@@ -1,0 +1,35 @@
+#!/bin/bash
+
+# Number of instances
+NODES=$1
+VENDORS=$2
+DISTRIBUTORS=$3
+IOTS=$4
+
+for i in $( seq 1 $NODES )
+do
+	lxc stop "bitcoin-node-$i"
+	sleep 5
+	lxc delete "bitcoin-node-$i"
+done
+
+for i in $( seq 1 $VENDORS )
+do
+	lxc stop "vendor-$i"
+	sleep 5
+	lxc delete "vendor-$i"
+done
+
+for i in $( seq 1 $DISTRIBUTORS )
+do
+	lxc stop "distributor-$i"
+	sleep 5
+	lxc delete "distributor-$i"
+done
+
+for i in $( seq 1 $IOTS )
+do
+	lxc stop "iot-$i"
+	sleep 5
+	lxc delete "iot-$i"
+done

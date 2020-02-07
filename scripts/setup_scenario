@@ -1,4 +1,7 @@
 #!/bin/bash
+RANDOM=$$
+random=$RANDOM
+echo $random > /home/ntapasunime/lxd-patching-lightning/workdir/seed_file/random.txt
 
 # Number of instances
 NODES=$1
@@ -26,113 +29,113 @@ sh create_network_articles --type=other --network=$NETWORK
 # Bitcoin Nodes
 for i in $( seq 1 $NODES )
 do
-	lxc launch ubuntu:16.04 "bitcoin-node-$i"
+	lxc launch ubuntu:16.04 "bitcoin-node-$random-$i"
 	sleep 10
 	echo "Setting up hostname..."
-	lxc exec bitcoin-node-$i -- sudo --login --user ubuntu bash -ilc "echo $(hostname -I | cut -d\  -f1) bitcoin-node-$i | sudo tee -a /etc/hosts"
+	lxc exec bitcoin-node-$random-$i -- sudo --login --user ubuntu bash -ilc "echo $(hostname -I | cut -d\  -f1) bitcoin-node-$random-$i | sudo tee -a /etc/hosts"
 	echo "SSH key generation..."
-	lxc exec bitcoin-node-$i -- sudo --login --user ubuntu bash -ilc "ssh-keygen -b 2048 -t rsa -f /home/ubuntu/.ssh/id_rsa -q -N \"\""
+	lxc exec bitcoin-node-$random-$i -- sudo --login --user ubuntu bash -ilc "ssh-keygen -b 2048 -t rsa -f /home/ubuntu/.ssh/id_rsa -q -N \"\""
 	echo "Restarting SSH service..."
-	lxc exec bitcoin-node-$i -- sudo --login --user ubuntu bash -ilc "sudo systemctl restart ssh"
+	lxc exec bitcoin-node-$random-$i -- sudo --login --user ubuntu bash -ilc "sudo systemctl restart ssh"
 	echo "Pulling SSH public key..."
-	lxc file pull bitcoin-node-$i/home/ubuntu/.ssh/id_rsa.pub ../workdir/ssh_files/id_rsa_bitcoin_node_$i.pub
+	lxc file pull bitcoin-node-$random-$i/home/ubuntu/.ssh/id_rsa.pub ../workdir/ssh_files/id_rsa_bitcoin_node_$i.pub
 	echo "Copying setup file to machine $i..."
-	lxc file push ./create_bitcoin_node bitcoin-node-$i/home/ubuntu/create_bitcoin_node
+	lxc file push ./create_bitcoin_node bitcoin-node-$random-$i/home/ubuntu/create_bitcoin_node
 	echo "Executing setup file to machine $i..."
-	lxc exec bitcoin-node-$i -- sudo --login --user ubuntu bash -ilc "sh create_bitcoin_node"
+	lxc exec bitcoin-node-$random-$i -- sudo --login --user ubuntu bash -ilc "sh create_bitcoin_node"
 	echo "Copying execution file to machine $i..."
-	lxc file push ./run_bitcoin_node bitcoin-node-$i/home/ubuntu/run_bitcoin_node
+	lxc file push ./run_bitcoin_node bitcoin-node-$random-$i/home/ubuntu/run_bitcoin_node
 	echo "Copying config file to machine $i..."
-	lxc exec bitcoin-node-$i -- sudo --login --user ubuntu bash -ilc "mkdir -p /home/ubuntu/.bitcoin"
-	lxc exec bitcoin-node-$i -- sudo --login --user ubuntu bash -ilc "mkdir -p /home/ubuntu/.lightning"
-	lxc file push ../workdir/node/bitcoin.conf bitcoin-node-$i/home/ubuntu/.bitcoin/bitcoin.conf
-	lxc file push ../workdir/node/config bitcoin-node-$i/home/ubuntu/.lightning/config
+	lxc exec bitcoin-node-$random-$i -- sudo --login --user ubuntu bash -ilc "mkdir -p /home/ubuntu/.bitcoin"
+	lxc exec bitcoin-node-$random-$i -- sudo --login --user ubuntu bash -ilc "mkdir -p /home/ubuntu/.lightning"
+	lxc file push ../workdir/node/bitcoin.conf bitcoin-node-$random-$i/home/ubuntu/.bitcoin/bitcoin.conf
+	lxc file push ../workdir/node/config bitcoin-node-$random-$i/home/ubuntu/.lightning/config
 	echo "Executing execution file to machine $i..."
-	lxc exec bitcoin-node-$i -- sudo --login --user ubuntu bash -ilc "sh run_bitcoin_node $NETWORK"
+	lxc exec bitcoin-node-$random-$i -- sudo --login --user ubuntu bash -ilc "sh run_bitcoin_node $NETWORK"
 	echo "Running the mining process..."
-	lxc exec bitcoin-node-$i -- sudo --login --user ubuntu bash -ilc "nohup ./mining &"
+	lxc exec bitcoin-node-$random-$i -- sudo --login --user ubuntu bash -ilc "nohup ./mining &"
 done
 
 # Vendors
 for i in $( seq 1 $VENDORS )
 do
-	lxc launch ubuntu:16.04 "vendor-$i"
+	lxc launch ubuntu:16.04 "vendor-$random-$i"
 	sleep 10
-	lxc exec vendor-$i -- sudo --login --user ubuntu bash -ilc "echo $(hostname -I | cut -d\  -f1) vendor-$i | sudo tee -a /etc/hosts"
+	lxc exec vendor-$random-$i -- sudo --login --user ubuntu bash -ilc "echo $(hostname -I | cut -d\  -f1) vendor-$random-$i | sudo tee -a /etc/hosts"
 	echo "SSH key generation..."
-	lxc exec vendor-$i -- sudo --login --user ubuntu bash -ilc "ssh-keygen -b 2048 -t rsa -f /home/ubuntu/.ssh/id_rsa -q -N \"\""
+	lxc exec vendor-$random-$i -- sudo --login --user ubuntu bash -ilc "ssh-keygen -b 2048 -t rsa -f /home/ubuntu/.ssh/id_rsa -q -N \"\""
 	echo "Pulling SSH public key..."
-	lxc file pull vendor-$i/home/ubuntu/.ssh/id_rsa.pub ../workdir/ssh_files/id_rsa_vendor_$i.pub
+	lxc file pull vendor-$random-$i/home/ubuntu/.ssh/id_rsa.pub ../workdir/ssh_files/id_rsa_vendor_$i.pub
 	echo "Pushing bitcoin node public key..."
 	for j in $( seq 1 $NODES )
 	do
-		lxc file push ../workdir/ssh_files/id_rsa_bitcoin_node_$j.pub vendor-$i/home/ubuntu/id_rsa.pub
-		lxc exec vendor-$i -- sudo --login --user ubuntu bash -ilc "cat /home/ubuntu/id_rsa.pub | cat >> /home/ubuntu/.ssh/authorized_keys"
-		lxc exec vendor-$i -- sudo --login --user ubuntu bash -ilc "rm -rf /home/ubuntu/id_rsa.pub"
+		lxc file push ../workdir/ssh_files/id_rsa_bitcoin_node_$j.pub vendor-$random-$i/home/ubuntu/id_rsa.pub
+		lxc exec vendor-$random-$i -- sudo --login --user ubuntu bash -ilc "cat /home/ubuntu/id_rsa.pub | cat >> /home/ubuntu/.ssh/authorized_keys"
+		lxc exec vendor-$random-$i -- sudo --login --user ubuntu bash -ilc "rm -rf /home/ubuntu/id_rsa.pub"
 	done
 	echo "Restarting SSH service..."
-	lxc exec vendor-$i -- sudo --login --user ubuntu bash -ilc "sudo systemctl restart ssh"
+	lxc exec vendor-$random-$i -- sudo --login --user ubuntu bash -ilc "sudo systemctl restart ssh"
 	echo "Checking first time connection..."
-	vendor_ip=$(lxc list "vendor-$i" -c 4 | awk '!/IPV4/{ if ( $2 != "" ) print $2}')
+	vendor_ip=$(lxc list "vendor-$random-$i" -c 4 | awk '!/IPV4/{ if ( $2 != "" ) print $2}')
         echo "$vendor_ip|ubuntu" | tee -a ../workdir/devices/vendor
 	for j in $( seq 1 $NODES )
 	do
 		lxc exec bitcoin-node-$j -- sudo --login --user ubuntu bash -ilc "echo exit | ssh -o \"StrictHostKeyChecking no\" ubuntu@$vendor_ip | echo connected"
 	done
 	echo "Install and configure upnp..."
-	lxc exec vendor-$i -- sudo --login --user ubuntu bash -ilc "sudo apt-get update && sudo apt-get install -y miniupnpc && upnpc -a $vendor_ip $UDPPORT $UDPPORT UDP"
+	lxc exec vendor-$random-$i -- sudo --login --user ubuntu bash -ilc "sudo apt-get update && sudo apt-get install -y miniupnpc && upnpc -a $vendor_ip $UDPPORT $UDPPORT UDP"
 done
 
 # Distributors
 for i in $( seq 1 $DISTRIBUTORS )
 do
-	lxc launch ubuntu:16.04 "distributor-$i"
+	lxc launch ubuntu:16.04 "distributor-$random-$i"
 	sleep 10
-	lxc exec distributor-$i -- sudo --login --user ubuntu bash -ilc "echo $(hostname -I | cut -d\  -f1) distributor-$i | sudo tee -a /etc/hosts"
+	lxc exec distributor-$random-$i -- sudo --login --user ubuntu bash -ilc "echo $(hostname -I | cut -d\  -f1) distributor-$random-$i | sudo tee -a /etc/hosts"
 	echo "Pushing bitcoin node public key..."
 	for j in $( seq 1 $NODES )
 	do
-		lxc file push ../workdir/ssh_files/id_rsa_bitcoin_node_$j.pub distributor-$i/home/ubuntu/id_rsa.pub
-		lxc exec distributor-$i -- sudo --login --user ubuntu bash -ilc "cat /home/ubuntu/id_rsa.pub | cat >> /home/ubuntu/.ssh/authorized_keys"
-		lxc exec distributor-$i -- sudo --login --user ubuntu bash -ilc "rm -rf /home/ubuntu/id_rsa.pub"
+		lxc file push ../workdir/ssh_files/id_rsa_bitcoin_node_$j.pub distributor-$random-$i/home/ubuntu/id_rsa.pub
+		lxc exec distributor-$random-$i -- sudo --login --user ubuntu bash -ilc "cat /home/ubuntu/id_rsa.pub | cat >> /home/ubuntu/.ssh/authorized_keys"
+		lxc exec distributor-$random-$i -- sudo --login --user ubuntu bash -ilc "rm -rf /home/ubuntu/id_rsa.pub"
 	done
 	echo "Restarting SSH service..."
-	lxc exec distributor-$i -- sudo --login --user ubuntu bash -ilc "sudo systemctl restart ssh"
+	lxc exec distributor-$random-$i -- sudo --login --user ubuntu bash -ilc "sudo systemctl restart ssh"
 	echo "Checking first time connection..."
-	distributor_ip=$(lxc list "distributor-$i" -c 4 | awk '!/IPV4/{ if ( $2 != "" ) print $2}')
+	distributor_ip=$(lxc list "distributor-$random-$i" -c 4 | awk '!/IPV4/{ if ( $2 != "" ) print $2}')
         echo "$distributor_ip|ubuntu" | tee -a ../workdir/devices/distributor
 	for j in $( seq 1 $NODES )
 	do
 		lxc exec bitcoin-node-$j -- sudo --login --user ubuntu bash -ilc "echo exit | ssh -o \"StrictHostKeyChecking no\" ubuntu@$distributor_ip | echo connected"
 	done
 	echo "Install and configure upnp..."
-	lxc exec distributor-$i -- sudo --login --user ubuntu bash -ilc "sudo apt-get update && sudo apt-get install -y miniupnpc && upnpc -a $vendor_ip $UDPPORT $UDPPORT UDP"
+	lxc exec distributor-$random-$i -- sudo --login --user ubuntu bash -ilc "sudo apt-get update && sudo apt-get install -y miniupnpc && upnpc -a $vendor_ip $UDPPORT $UDPPORT UDP"
 done
 
 # IoT nodes
 for i in $( seq 1 $IOTS )
 do
-	lxc launch ubuntu:16.04 "iot-$i"
+	lxc launch ubuntu:16.04 "iot-$random-$i"
 	sleep 10
-	lxc exec iot-$i -- sudo --login --user ubuntu bash -ilc "echo $(hostname -I | cut -d\  -f1) iot-$i | sudo tee -a /etc/hosts"
+	lxc exec iot-$random-$i -- sudo --login --user ubuntu bash -ilc "echo $(hostname -I | cut -d\  -f1) iot-$random-$i | sudo tee -a /etc/hosts"
 	echo "Pushing bitcoin node public key..."
 	for j in $( seq 1 $NODES )
 	do
-		lxc file push ../workdir/ssh_files/id_rsa_bitcoin_node_$j.pub iot-$i/home/ubuntu/id_rsa.pub
-		lxc exec iot-$i -- sudo --login --user ubuntu bash -ilc "cat /home/ubuntu/id_rsa.pub | cat >> /home/ubuntu/.ssh/authorized_keys"
-		lxc exec iot-$i -- sudo --login --user ubuntu bash -ilc "rm -rf /home/ubuntu/id_rsa.pub"
+		lxc file push ../workdir/ssh_files/id_rsa_bitcoin_node_$j.pub iot-$random-$i/home/ubuntu/id_rsa.pub
+		lxc exec iot-$random-$i -- sudo --login --user ubuntu bash -ilc "cat /home/ubuntu/id_rsa.pub | cat >> /home/ubuntu/.ssh/authorized_keys"
+		lxc exec iot-$random-$i -- sudo --login --user ubuntu bash -ilc "rm -rf /home/ubuntu/id_rsa.pub"
 	done
 	echo "Pushing vendor node public key..."
 	for j in $( seq 1 $NODES )
 	do
-		lxc file push ../workdir/ssh_files/id_rsa_vendor_$j.pub iot-$i/home/ubuntu/id_rsa.pub
-		lxc exec iot-$i -- sudo --login --user ubuntu bash -ilc "cat /home/ubuntu/id_rsa.pub | cat >> /home/ubuntu/.ssh/authorized_keys"
-		lxc exec iot-$i -- sudo --login --user ubuntu bash -ilc "rm -rf /home/ubuntu/id_rsa.pub"
+		lxc file push ../workdir/ssh_files/id_rsa_vendor_$j.pub iot-$random-$i/home/ubuntu/id_rsa.pub
+		lxc exec iot-$random-$i -- sudo --login --user ubuntu bash -ilc "cat /home/ubuntu/id_rsa.pub | cat >> /home/ubuntu/.ssh/authorized_keys"
+		lxc exec iot-$random-$i -- sudo --login --user ubuntu bash -ilc "rm -rf /home/ubuntu/id_rsa.pub"
 	done
 	echo "Restarting SSH service..."
-	lxc exec iot-$i -- sudo --login --user ubuntu bash -ilc "sudo systemctl restart ssh"
+	lxc exec iot-$random-$i -- sudo --login --user ubuntu bash -ilc "sudo systemctl restart ssh"
 	echo "Checking first time connection..."
-	iot_ip=$(lxc list "iot-$i" -c 4 | awk '!/IPV4/{ if ( $2 != "" ) print $2}')
+	iot_ip=$(lxc list "iot-$random-$i" -c 4 | awk '!/IPV4/{ if ( $2 != "" ) print $2}')
         echo "$iot_ip|ubuntu" | tee -a ../workdir/devices/iot
 	for j in $( seq 1 $NODES )
 	do
@@ -143,13 +146,13 @@ do
 		lxc exec vendor-$j -- sudo --login --user ubuntu bash -ilc "echo exit | ssh -o \"StrictHostKeyChecking no\" ubuntu@$iot_ip | echo \"vendor node $j connected\""
 	done
 	echo "Install and configure upnp..."
-	lxc exec iot-$i -- sudo --login --user ubuntu bash -ilc "sudo apt-get update && sudo apt-get install -y miniupnpc && upnpc -a $vendor_ip $UDPPORT $UDPPORT UDP"
+	lxc exec iot-$random-$i -- sudo --login --user ubuntu bash -ilc "sudo apt-get update && sudo apt-get install -y miniupnpc && upnpc -a $vendor_ip $UDPPORT $UDPPORT UDP"
 done
 
 # Prepare installation files
-host_ip=$(lxc list bitcoin-node-1 -c 4 | awk '!/IPV4/{ if ( $2 != "" ) print $2}')
-vendor_ip=$(lxc list vendor-1 -c 4 | awk '!/IPV4/{ if ( $2 != "" ) print $2}')
-hub_node_id=$(lxc exec bitcoin-node-1 -- sudo --login --user ubuntu bash -ilc "/home/ubuntu/lightning/cli/lightning-cli getinfo | jq -r .id")
+host_ip=$(lxc list bitcoin-node-$random-1 -c 4 | awk '!/IPV4/{ if ( $2 != "" ) print $2}')
+vendor_ip=$(lxc list vendori-$random-1 -c 4 | awk '!/IPV4/{ if ( $2 != "" ) print $2}')
+hub_node_id=$(lxc exec bitcoin-node-$random-1 -- sudo --login --user ubuntu bash -ilc "/home/ubuntu/lightning/cli/lightning-cli getinfo | jq -r .id")
 if test "$NETWORK" = "regtest"
 then
 	rpc_port=18443
@@ -166,44 +169,44 @@ sed -i "s/replace_with_id/$hub_node_id/" ../workdir/other/Deployment_config.json
 sed -i "s/replace_with_vendor_ip/$vendor_ip/" ../workdir/other/Deployment_config.json
 
 echo "Copying the files to the deployment/node server..."
-lxc file push ../workdir/other/bitcoin.conf bitcoin-node-1/home/ubuntu/patching-lightning/Deployment/bitcoin.conf
-lxc file push ../workdir/other/config bitcoin-node-1/home/ubuntu/patching-lightning/Deployment/config
-lxc file push ../workdir/other/Deployment_config.json bitcoin-node-1/home/ubuntu/patching-lightning/Deployment/Deployment_config.json
-lxc file push ../workdir/devices/vendor bitcoin-node-1/home/ubuntu/patching-lightning/Deployment/vendor
-lxc file push ../workdir/devices/distributor bitcoin-node-1/home/ubuntu/patching-lightning/Deployment/distributor
-lxc file push ../workdir/devices/iot bitcoin-node-1/home/ubuntu/patching-lightning/Deployment/iot
+lxc file push ../workdir/other/bitcoin.conf bitcoin-node-$random-1/home/ubuntu/patching-lightning/Deployment/bitcoin.conf
+lxc file push ../workdir/other/config bitcoin-node-$random-1/home/ubuntu/patching-lightning/Deployment/config
+lxc file push ../workdir/other/Deployment_config.json bitcoin-node-$random-1/home/ubuntu/patching-lightning/Deployment/Deployment_config.json
+lxc file push ../workdir/devices/vendor bitcoin-node-$random-1/home/ubuntu/patching-lightning/Deployment/vendor
+lxc file push ../workdir/devices/distributor bitcoin-node-$random-1/home/ubuntu/patching-lightning/Deployment/distributor
+lxc file push ../workdir/devices/iot bitcoin-node-$random-1/home/ubuntu/patching-lightning/Deployment/iot
 
 # End of machine setup
 end_machine=`date +%s`
 echo "Machine setup: $((end_machine-start_script))"
 
 # Setup vendor machine
-lxc exec bitcoin-node-1 -- sudo --login --user ubuntu bash -ilc "cd /home/ubuntu/patching-lightning/Deployment && chmod +x deploy.sh && ./deploy.sh --new --vendor"
-lxc exec bitcoin-node-1 -- sudo --login --user ubuntu bash -ilc "cd /home/ubuntu/patching-lightning/Deployment && ./deploy.sh --run --vendor"
+lxc exec bitcoin-node-$random-1 -- sudo --login --user ubuntu bash -ilc "cd /home/ubuntu/patching-lightning/Deployment && chmod +x deploy.sh && ./deploy.sh --new --vendor"
+lxc exec bitcoin-node-$random-1 -- sudo --login --user ubuntu bash -ilc "cd /home/ubuntu/patching-lightning/Deployment && ./deploy.sh --run --vendor"
 
 # End of vendor setup
 end_vendor=`date +%s`
 echo "Vendor Machine deployment: $((end_vendor-end_machine))"
 
 # Setup distributor machine
-lxc exec bitcoin-node-1 -- sudo --login --user ubuntu bash -ilc "cd /home/ubuntu/patching-lightning/Deployment && ./deploy.sh --new --distributor"
+lxc exec bitcoin-node-$random-1 -- sudo --login --user ubuntu bash -ilc "cd /home/ubuntu/patching-lightning/Deployment && ./deploy.sh --new --distributor"
 
 # This is the wait for mining 6 transactions
 sleep 3000;
 
-lxc exec bitcoin-node-1 -- sudo --login --user ubuntu bash -ilc "cd /home/ubuntu/patching-lightning/Deployment && ./deploy.sh --run --distributor"
+lxc exec bitcoin-node-$random-1 -- sudo --login --user ubuntu bash -ilc "cd /home/ubuntu/patching-lightning/Deployment && ./deploy.sh --run --distributor"
 
 # End of distributor setup
 end_distributor=`date +%s`
 echo "Distributor Machine deployment: $((end_distributor-end_vendor))"
 
 # Setup iot machine
-lxc exec bitcoin-node-1 -- sudo --login --user ubuntu bash -ilc "cd /home/ubuntu/patching-lightning/Deployment && ./deploy.sh --new --iot"
+lxc exec bitcoin-node-$random-1 -- sudo --login --user ubuntu bash -ilc "cd /home/ubuntu/patching-lightning/Deployment && ./deploy.sh --new --iot"
 
 # This is the wait for mining 6 transactions
 sleep 3000;
 
-lxc exec bitcoin-node-1 -- sudo --login --user ubuntu bash -ilc "cd /home/ubuntu/patching-lightning/Deployment && ./deploy.sh --run --iot"
+lxc exec bitcoin-node-$random-1 -- sudo --login --user ubuntu bash -ilc "cd /home/ubuntu/patching-lightning/Deployment && ./deploy.sh --run --iot"
 
 # End of iot setup
 end_iot=`date +%s`
@@ -216,6 +219,3 @@ echo "Vendor Machine deployment: $((end_vendor-end_machine))"
 echo "Distributor Machine deployment: $((end_distributor-end_vendor))"
 echo "IoT Machine deployment: $((end_iot-end_distributor))"
 echo "Total Execution Time: $((end_iot-start_script))"
-
-echo "Test configuration files in vendor"
-lxc exec vendor-1 -- sudo --login --user ubuntu bash -ilc "mkdir -p /home/ubuntu/testfiles && cd /home/ubuntu/testfiles && dd if=/dev/urandom of=file-10kb bs=10 count=1000 && dd if=/dev/urandom of=file-100kb bs=100 count=1000 && dd if=/dev/urandom of=file-1mb bs=1000 count=1000 && dd if=/dev/urandom of=file-10mb bs=10000 count=1000 && dd if=/dev/urandom of=file-100mb bs=10000 count=10000 && dd if=/dev/urandom of=file-1gb bs=100000 count=10000"

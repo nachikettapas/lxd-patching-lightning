@@ -80,7 +80,7 @@ do
         echo "$vendor_ip|ubuntu" | tee -a ../workdir/devices/vendor
 	for j in $( seq 1 $NODES )
 	do
-		lxc exec bitcoin-node-$j -- sudo --login --user ubuntu bash -ilc "echo exit | ssh -o \"StrictHostKeyChecking no\" ubuntu@$vendor_ip | echo connected"
+		lxc exec bitcoin-node-$random-$j -- sudo --login --user ubuntu bash -ilc "echo exit | ssh -o \"StrictHostKeyChecking no\" ubuntu@$vendor_ip | echo connected"
 	done
 	echo "Install and configure upnp..."
 	lxc exec vendor-$random-$i -- sudo --login --user ubuntu bash -ilc "sudo apt-get update && sudo apt-get install -y miniupnpc && upnpc -a $vendor_ip $UDPPORT $UDPPORT UDP"
@@ -106,7 +106,7 @@ do
         echo "$distributor_ip|ubuntu" | tee -a ../workdir/devices/distributor
 	for j in $( seq 1 $NODES )
 	do
-		lxc exec bitcoin-node-$j -- sudo --login --user ubuntu bash -ilc "echo exit | ssh -o \"StrictHostKeyChecking no\" ubuntu@$distributor_ip | echo connected"
+		lxc exec bitcoin-node-$random-$j -- sudo --login --user ubuntu bash -ilc "echo exit | ssh -o \"StrictHostKeyChecking no\" ubuntu@$distributor_ip | echo connected"
 	done
 	echo "Install and configure upnp..."
 	lxc exec distributor-$random-$i -- sudo --login --user ubuntu bash -ilc "sudo apt-get update && sudo apt-get install -y miniupnpc && upnpc -a $vendor_ip $UDPPORT $UDPPORT UDP"
@@ -139,11 +139,11 @@ do
         echo "$iot_ip|ubuntu" | tee -a ../workdir/devices/iot
 	for j in $( seq 1 $NODES )
 	do
-		lxc exec bitcoin-node-$j -- sudo --login --user ubuntu bash -ilc "echo exit | ssh -o \"StrictHostKeyChecking no\" ubuntu@$iot_ip | echo \"bitcoin node $j connected\""
+		lxc exec bitcoin-node-$random-$j -- sudo --login --user ubuntu bash -ilc "echo exit | ssh -o \"StrictHostKeyChecking no\" ubuntu@$iot_ip | echo \"bitcoin node $j connected\""
 	done
 	for j in $( seq 1 $VENDORS )
 	do
-		lxc exec vendor-$j -- sudo --login --user ubuntu bash -ilc "echo exit | ssh -o \"StrictHostKeyChecking no\" ubuntu@$iot_ip | echo \"vendor node $j connected\""
+		lxc exec vendor-$random-$j -- sudo --login --user ubuntu bash -ilc "echo exit | ssh -o \"StrictHostKeyChecking no\" ubuntu@$iot_ip | echo \"vendor node $j connected\""
 	done
 	echo "Install and configure upnp..."
 	lxc exec iot-$random-$i -- sudo --login --user ubuntu bash -ilc "sudo apt-get update && sudo apt-get install -y miniupnpc && upnpc -a $vendor_ip $UDPPORT $UDPPORT UDP"
@@ -151,7 +151,7 @@ done
 
 # Prepare installation files
 host_ip=$(lxc list bitcoin-node-$random-1 -c 4 | awk '!/IPV4/{ if ( $2 != "" ) print $2}')
-vendor_ip=$(lxc list vendori-$random-1 -c 4 | awk '!/IPV4/{ if ( $2 != "" ) print $2}')
+vendor_ip=$(lxc list vendor-$random-1 -c 4 | awk '!/IPV4/{ if ( $2 != "" ) print $2}')
 hub_node_id=$(lxc exec bitcoin-node-$random-1 -- sudo --login --user ubuntu bash -ilc "/home/ubuntu/lightning/cli/lightning-cli getinfo | jq -r .id")
 if test "$NETWORK" = "regtest"
 then

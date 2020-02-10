@@ -11,7 +11,7 @@ sleep 60
 
 # Run lightning process
 echo "Running the lightning daemon..."
-nohup /home/ubuntu/lightning/lightningd/lightningd --log-level=debug --daemon > runLogLightning.log 2>&1 &
+nohup /home/ubuntu/lightning/lightningd/lightningd --daemon > runLogLightning.log 2>&1 &
 
 # Letting the lightning process to start
 sleep 60
